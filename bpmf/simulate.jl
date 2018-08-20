@@ -42,127 +42,42 @@ function Storage(model, n_iter)
     dloga = zeros(n_iter, model.L)
     b = zeros(n_iter, model.M)
     dlogb = zeros(n_iter, model.M)
-    rmse = zeros(n_iter)
+    rmse = zeros(Int(n_iter / 10))
     Storage(U, V, a, b, dlogU, dlogV, dloga, dlogb, rmse)
 end
 
-function run_sgld(model::matrix_factorisation, stepsize::Float64,
-                       sgd_step::Float64, subsize::Int64, n_iter::Int64)
-    # Find good initial values for SGLD using SGD
-    println("Run sgd")
-    sgd_init = run_sgd(model, sgd_step, subsize, n_iter)
+function run_mcmc(model::matrix_factorisation, stepsize::Float64,
+        subsize::Int64, n_iter::Int64, sgd_init::sgd, algo::String)
     model.U = sgd_init.U
     model.V = sgd_init.V
     model.a = sgd_init.a
     model.b = sgd_init.b
     update_Λ(model)
-    # Run SGLD after SGD run
     # Generate objects and storage
-    println("Run sgld")
+    println("Run ", algo)
     println("Number of users: $(model.L)\tNumber of items: $(model.M)")
     tuning = sgld(model, subsize, stepsize)
     stored = Storage(model, n_iter)
-    # Simulate using SGLD
+    if (algo=="SGLDFP")
+        cv = control_variate(model, sgd_init)
+    end
     for tuning.iter in 1:n_iter
         # Print progress, check the chain hasn't diverged, store perplexity
         if ( tuning.iter % 10 == 0 )
             rmse_current = rmse(model)
-            # rmse_opt = rmse( model, cv )
             println("$(tuning.iter)\t$rmse_current")
-            # open("rmse_out/$(model.L)/sgld-1.log", "a") do f
-            #     write(f, "$(tuning.iter)\t$rmse_current\n")
-            # end
-            stored.rmse[tuning.iter] = rmse_current
+            stored.rmse[Int(tuning.iter /10)] = rmse_current
             if ( ( sum(isnan(model.U)) > 0 ) | ( sum(isnan(model.U)) > 0 ) )
                 print("\n")
                 error("The chain has diverged")
             end
         end
         # Update 1 iteration
-        sgld_full_update(model, tuning)
-        # Update storage
-        stored.U[tuning.iter,:,:] = model.U
-        stored.dlogU[tuning.iter,:,:] = model.dlogU
-        stored.V[tuning.iter,:,:] = model.V
-        stored.dlogV[tuning.iter,:,:] = model.dlogV
-        stored.a[tuning.iter,:] = model.a
-        stored.dloga[tuning.iter,:] = model.dloga
-        stored.b[tuning.iter,:] = model.b
-        stored.dlogb[tuning.iter,:] = model.dlogb
-    end
-    return( stored )
-end
-
-function run_lmc(model::matrix_factorisation, stepsize::Float64,
-                   sgd_step::Float64, subsize::Int64, n_iter::Int64)
-    # Find good initial values for SGLD using SGD
-    println("Run sgd")
-    sgd_init = run_sgd(model, sgd_step, 5000, n_iter)
-    model.U = sgd_init.U
-    model.V = sgd_init.V
-    model.a = sgd_init.a
-    model.b = sgd_init.b
-    update_Λ(model)
-    # Run SGLD after SGD run
-    # Generate objects and storage
-    println("Run LMC")
-    println("Number of users: $(model.L)\tNumber of items: $(model.M)")
-    tuning = sgld(model, subsize, stepsize)
-    stored = Storage(model, n_iter)
-    # Simulate using SGLD
-    for tuning.iter in 1:n_iter
-    # Print progress, check the chain hasn't diverged, store perplexity
-    if ( tuning.iter % 10 == 0 )
-    rmse_current = rmse(model)
-    # rmse_opt = rmse( model, cv )
-    println("$(tuning.iter)\t$rmse_current")
-    # open("rmse_out/$(model.L)/sgld-1.log", "a") do f
-    #     write(f, "$(tuning.iter)\t$rmse_current\n")
-    # end
-    stored.rmse[tuning.iter] = rmse_current
-    if ( ( sum(isnan(model.U)) > 0 ) | ( sum(isnan(model.U)) > 0 ) )
-    print("\n")
-    error("The chain has diverged")
-    end
-    end
-    # Update 1 iteration
-    sgld_full_update(model, tuning)
-    # Update storage
-    stored.U[tuning.iter,:,:] = model.U
-    stored.dlogU[tuning.iter,:,:] = model.dlogU
-    stored.V[tuning.iter,:,:] = model.V
-    stored.dlogV[tuning.iter,:,:] = model.dlogV
-    stored.a[tuning.iter,:] = model.a
-    stored.dloga[tuning.iter,:] = model.dloga
-    stored.b[tuning.iter,:] = model.b
-    stored.dlogb[tuning.iter,:] = model.dlogb
-    end
-    return( stored )
-end
-
-function run_sgd_smallstep(model::matrix_factorisation, stepsize::Float64,
-    sgd_step::Float64, subsize::Int64, n_iter::Int64)
-    # Find good initial values for SGLD using SGD
-    println("Run sgd")
-    sgd_init = run_sgd(model, sgd_step, subsize, n_iter)
-    model.U = sgd_init.U
-    model.V = sgd_init.V
-    model.a = sgd_init.a
-    model.b = sgd_init.b
-    update_Λ(model)
-    # Run SGLD after SGD run
-    # Generate objects and storage
-    println("Run sgd small step")
-    println("Number of users: $(model.L)\tNumber of items: $(model.M)")
-    tuning = sgd(model, subsize, stepsize)
-    stored = Storage(model, n_iter)
-    for tuning.iter in 1:n_iter
-        if tuning.iter % 10 == 0
-            rmse_current = rmse(model)
-            println("$(tuning.iter)\t$rmse_current")
-            stored.rmse[tuning.iter] = rmse_current
+        if (algo=="SGLDFP")
+            cv_full_update(model, tuning, cv)
+        else
+            sgld_full_update(model, tuning)
         end
-        sgd_update(model, tuning)
         # Update storage
         stored.U[tuning.iter,:,:] = model.U
         stored.dlogU[tuning.iter,:,:] = model.dlogU
@@ -173,61 +88,15 @@ function run_sgd_smallstep(model::matrix_factorisation, stepsize::Float64,
         stored.b[tuning.iter,:] = model.b
         stored.dlogb[tuning.iter,:] = model.dlogb
     end
-    return( stored )
-end
-
-function run_cv(model::matrix_factorisation, stepsize::Float64,
-                  sgd_step::Float64, subsize::Int64, n_iter::Int64)
-    # Find good initial values for SGLD using SGD
-    println("Run sgd")
-    sgd_init = run_sgd(model, sgd_step, subsize, n_iter)
-    model.U = sgd_init.U
-    model.V = sgd_init.V
-    model.a = sgd_init.a
-    model.b = sgd_init.b
-    update_Λ(model)
-    # Run SGLDFP after SGD run
-    # Generate objects and storage
-    println("Run sgldfp")
-    println("Number of users: $(model.L)\tNumber of items: $(model.M)")
-    tuning = sgld(model, subsize, stepsize)
-    cv = control_variate(model, sgd_init)
-    stored = Storage(model, n_iter)
-    # mkpath("rmse_out/sgldfp/$(model.L)/")
-    # Simulate using SGLD
-    for tuning.iter in 1:n_iter
-        # Print progress, check the chain hasn't diverged, store perplexity
-        if ( tuning.iter % 10 == 0 )
-            rmse_current = rmse(model)
-            # rmse_opt = rmse( model, cv )
-            println("$(tuning.iter)\t$rmse_current")
-            stored.rmse[tuning.iter] = rmse_current
-            # open("rmse_out/$(model.L)/sgldfp-1.log", "a") do f
-            #     write(f, "$(tuning.iter)\t$rmse_current\n")
-            # end
-            if ( ( sum(isnan(model.U)) > 0 ) | ( sum(isnan(model.U)) > 0 ) )
-                print("\n")
-                error("The chain has diverged")
-            end
-        end
-        # Update 1 iteration
-        cv_full_update(model, tuning, cv)
-        # Update storage
-        stored.U[tuning.iter,:,:] = model.U
-        stored.dlogU[tuning.iter,:,:] = model.dlogU
-        stored.V[tuning.iter,:,:] = model.V
-        stored.dlogV[tuning.iter,:,:] = model.dlogV
-        stored.a[tuning.iter,:] = model.a
-        stored.dloga[tuning.iter,:] = model.dloga
-        stored.b[tuning.iter,:] = model.b
-        stored.dlogb[tuning.iter,:] = model.dlogb
+    if (algo=="SGLDFP")
+        return( cv, stored )
+    else
+        return( stored )
     end
-    return( cv, stored )
 end
 
 function run_sgd(model::matrix_factorisation, stepsize::Float64, subsize::Int64, n_iter::Int64)
     tuning = sgd(model, subsize, stepsize)
-    # mkpath("sgd_log/$(model.L)/")
     for tuning.iter in 1:n_iter
         if tuning.iter % 10 == 0
             rmse_current = rmse(model)

@@ -78,16 +78,6 @@ function control_variate( model::matrix_factorisation, sgd_init::sgd )
     b = sgd_init.b
     ll_b = sgd_init.ll_b
     G_b = sgd_init.G_b
-    # random initialization
-    # G_U = ones( size(model.U) )
-    # G_V = ones( size(model.V) )
-    # G_a = ones( size(model.a) )
-    # G_b = ones( size(model.b) )
-    # U = zeros( size(model.U) )
-    # V = zeros( size(model.V) )
-    # a = zeros( size(model.a) )
-    # b = zeros( size(model.b) )
-    #
     control_variate( η_U, η_V, η_a, η_b, U, ll_U, G_U, V, ll_V, G_V, a, ll_a, G_a, b, ll_b, G_b )
 end
 
