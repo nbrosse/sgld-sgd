@@ -1,2 +1,6 @@
 *.test
 *.base
+*.dat
+*.npz
+*.ipynb
+.ipynb_checkpoints
