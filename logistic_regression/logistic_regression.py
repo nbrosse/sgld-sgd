@@ -1,7 +1,9 @@
 import numpy as np
 from sklearn.metrics import log_loss
 import time
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
+#from scipy.optimize import minimize
+import sys
 
 class Stopwatch:
     """Define tic() and toc() for calculating time"""
@@ -245,7 +247,9 @@ class LogisticRegression:
         # Adjust log density gradients so they're unbiased
         dlogbeta *= self.N / minibatch_size
         # Add gradient of log prior (assume Laplace prior with scale 1)
-        dlogbeta -= np.sign(self.beta)
+#        dlogbeta -= np.sign(self.beta)
+        # Add gradient of log prior (assume Gaussian prior with scale 1)
+        dlogbeta -= self.beta
         return dlogbeta
 
 
@@ -272,8 +276,11 @@ class LogisticRegression:
         dlogbeta *= self.N / minibatch_size
         dlogbetaopt *= self.N / minibatch_size
         # Add gradient of log prior (assume Laplace prior with scale 1)
-        dlogbeta -= np.sign(self.beta)
-        dlogbetaopt -= np.sign(self.beta_mode)
+#        dlogbeta -= np.sign(self.beta)
+        # Add gradient of log prior (assume Gaussian prior with scale 1)
+        dlogbeta -= self.beta        
+#        dlogbetaopt -= np.sign(self.beta_mode)
+        dlogbetaopt -= self.beta_mode
         return dlogbeta, dlogbetaopt
 
     def sample_minibatch(self, minibatch_size):
@@ -285,35 +292,87 @@ class LogisticRegression:
         dlogbeta, dlogbetaopt = self.dlogpostcv()
         self.full_post = dlogbetaopt
 
-#%% Test 
+#%% Test - computation of the modes
 
-X_train = np.load( 'cover_type\\X_train.dat' )
-X_test = np.load( 'cover_type\\X_test.dat' )
-y_train = np.load( 'cover_type\\y_train.dat' )
-y_test = np.load( 'cover_type\\y_test.dat' )
+#X_train = np.load( 'cover_type/X_train.dat' )
+#X_test = np.load( 'cover_type/X_test.dat' )
+#y_train = np.load( 'cover_type/y_train.dat' )
+#y_test = np.load( 'cover_type/y_test.dat' )
+#
+#
+#d = X_train.shape[1]
+#n_iter = 10**3
+#
+#N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
+#
+#beta_mode_tab = np.zeros((len(N_tab), d))
+#
+#for i in np.arange(len(N_tab)):
+#    N_trunc = N_tab[i]
+#    lr = LogisticRegression( X_train, X_test, y_train, y_test )
+#    step = 1./float(N_trunc)
+#    lr.truncate(N_trunc, X_test.shape[0])
+#    lr.fit_sgd(step,n_iters=n_iter,minibatch_size=500)
+#    
+#    X = np.array(lr.X)
+#    Y = lr.y
+#    
+#    def U(x):
+#       r = (1./2.)*np.linalg.norm(x)**2 - Y.T @ X @ x + np.sum(np.log(1.+np.exp(X @ x)))
+#       return r
+#    
+#    def gradU(x):
+#       grad = - X.T @ Y + X.T @ (1./(1+np.exp(-X @ x))) + x
+#       return grad
+#
+#    resultat = minimize(U, x0=lr.beta_mode, jac=gradU)
+#    beta_mode = resultat['x']
+#    beta_mode_tab[i,:] = beta_mode
+#    
+#    # Sanity check
+#    lr.beta_mode = beta_mode
+#    lr.full_post_computation()
+#    print('iteration ', i)
+#    print('--------------------------------')
+#    print(lr.full_post)
+#
+#np.save('beta_mode_tab.npy', beta_mode_tab)
 
-step_sgd = 5e-6
-stepsize = 5e-6
+#%% Test running SGLD and SLDFP
+
+X_train = np.load( 'cover_type/X_train.dat' )
+X_test = np.load( 'cover_type/X_test.dat' )
+y_train = np.load( 'cover_type/y_train.dat' )
+y_test = np.load( 'cover_type/y_test.dat' )
+
+beta_mode_tab = np.load('beta_mode_tab.npy')
+
+N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
+n_iter_tab = 10**2 * N_tab
+
+str_N = sys.argv[1]
+
+if str_N=='N3':
+    i = 0
+elif str_N=='N4':
+    i = 1
+elif str_N=='N5':
+    i = 2
+else:
+    i = 3
+    
+N_trunc = N_tab[i]
+n_iter = n_iter_tab[i]
+beta_mode= beta_mode_tab[i,:]
 lr = LogisticRegression( X_train, X_test, y_train, y_test )
-lr.fit_sgd(step_sgd)
-lr.fit_sgld(stepsize,n_iters=10**4,minibatch_size=5000)
-
-# np.savez_compressed("sgld-batch5000-traj.npz", traj=lr.sample, traj_grad = lr.grad_sample)
-# np.savez_compressed("sgd-traj.npz", traj=lr.sample, traj_grad = lr.grad_sample, \
-#                     beta_mode = lr.beta_mode)
-
-# npzfile = np.load("sgd-traj.npz")
-# traj = npzfile["traj"]
-# traj_grad = npzfile["traj_grad"]
-# lr.beta_mode = npzfile["beta_mode"]
-
-# d = traj.shape[1]
-
-# for i in np.arange(d):
-#     plt.plot(traj[:,i])
-#     plt.show()
-
-# beta_mode = lr.beta_mode
-
-
-
+step = 1./float(N_trunc)
+lr.truncate(N_trunc, X_test.shape[0])
+lr.beta_mode = beta_mode
+lr.fit_sgld(step,n_iters=n_iter,minibatch_size=50)
+var_grad = np.mean(np.var(lr.grad_sample,axis=0))
+var_traj = np.var(lr.sample, axis=0)    
+lr.fit_sgldfp(step,n_iters=n_iter,minibatch_size=50)
+var_grad_fp = np.mean(np.var(lr.grad_sample,axis=0))
+var_traj_fp = np.var(lr.sample, axis=0)
+np.savez(str_N, var_grad=var_grad, var_traj=var_traj, var_grad_fp=var_grad_fp, 
+         var_traj_fp=var_traj_fp)

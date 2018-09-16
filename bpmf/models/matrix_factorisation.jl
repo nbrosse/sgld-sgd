@@ -34,7 +34,7 @@ end
 """
 Initialise mat_fac object from train and test set
 """
-function matrix_factorisation( train, test, D = 2 ) # D = 20
+function matrix_factorisation( train, test, D = 20 ) # D = 20
     model_name = "matrix_factorisation"
     ( L, M ) = maximum( train[:,1:2], 1 )
     N = size( train, 1 )
