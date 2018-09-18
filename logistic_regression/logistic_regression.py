@@ -64,7 +64,7 @@ class LogisticRegression:
         self.sample = None
         self.grad_sample = None
         # Storage for logloss and time values during fitting
-        self.training_loss = []
+#        self.training_loss = []
         self.n_iters = None
         
     def truncate(self,train_size,test_size):
@@ -90,33 +90,19 @@ class LogisticRegression:
         # Start chain from mode
         # Run fit_sgd() before
         self.beta = self.beta_mode.copy()
-        # Holds log loss values once fitted
-        self.training_loss = []
-        # Number of iterations before the logloss is stored
-        self.loss_thinning = 10
-        # Initialize sample storage
+        self.sample = np.zeros((2, self.d))
+        self.grad_sample = np.zeros((2, self.d))
         self.n_iters = n_iters
-        self.sample = np.zeros( ( self.n_iters, self.d ) )
-        self.grad_sample = np.zeros( ( self.n_iters, self.d ) )
         # Calculate likelihood at beta mode
         self.full_post_computation()
         print ("Fitting chain...")
-        print ("{0}\t{1}".format( "iteration", "Test log loss" ))
-        timer = Stopwatch()
         for i in np.arange(self.n_iters):
-            # Every so often output log loss on test set and store 
-            if i % self.loss_thinning == 0:
-                elapsed_time = timer.toc()
-                current_loss = self.logloss()
-                self.training_loss.append( [current_loss,elapsed_time] )
-                print ("{0}\t\t{1}\t\t{2}".format( i, current_loss, elapsed_time ))
-                timer.tic()
             self.sample_minibatch(minibatch_size)
-            self.sample[i,:] = self.beta
+            self.sample += np.vstack((self.beta, np.power(self.beta,2))) / self.n_iters
             # Calculate gradients at current point
             dlogbeta, dlogbetaopt = self.dlogpostcv()
             dlogbetacv = self.full_post + ( dlogbeta - dlogbetaopt ) 
-            self.grad_sample[i,:] = dlogbetacv
+            self.grad_sample += np.vstack((dlogbetacv, np.power(dlogbetacv, 2))) / self.n_iters
             # Update parameters using SGD
             eta = np.sqrt( stepsize ) * np.random.normal( size = self.d )
             self.beta += stepsize / 2 * dlogbetacv + eta
@@ -135,30 +121,19 @@ class LogisticRegression:
         # Start chain from mode
         # Run fit_sgd() before
         self.beta = self.beta_mode.copy()
-        # Holds log loss values once fitted
-        self.training_loss = []
+        self.sample = np.zeros((2, self.d))
+        self.grad_sample = np.zeros((2, self.d))
         # Number of iterations before the logloss is stored
         self.loss_thinning = 10
         # Initialize sample storage
         self.n_iters = n_iters
-        self.sample = np.zeros( ( self.n_iters, self.d ) )
-        self.grad_sample = np.zeros( ( self.n_iters, self.d ) )
         print ("Fitting chain...")
-        print ("{0}\t{1}".format( "iteration", "Test log loss" ))
-        timer = Stopwatch()
         for i in np.arange(self.n_iters):
-            # Every so often output log loss on test set and store 
-            if i % self.loss_thinning == 0:
-                elapsed_time = timer.toc()
-                current_loss = self.logloss()
-                self.training_loss.append( [current_loss,elapsed_time] )
-                print ("{0}\t\t{1}\t\t{2}".format( i, current_loss, elapsed_time ))
-                timer.tic()
             self.sample_minibatch(minibatch_size)
+            self.sample += np.vstack((self.beta, np.power(self.beta,2))) / self.n_iters
             # Calculate gradients at current point
             dlogbeta = self.dlogpost()
-            self.grad_sample[i,:] = dlogbeta
-            self.sample[i,:] = self.beta
+            self.grad_sample += np.vstack((dlogbeta, np.power(dlogbeta, 2))) / self.n_iters
             # Update parameters using SGD
             eta = np.sqrt( stepsize ) * np.random.normal( size = self.d )
             self.beta += stepsize / 2 * ( dlogbeta ) + eta
@@ -351,6 +326,7 @@ N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
 n_iter_tab = 10**2 * N_tab
 
 str_N = sys.argv[1]
+str_algo = sys.argv[2] # 'sgld' or 'sgldfp'
 
 if str_N=='N3':
     i = 0
@@ -368,11 +344,14 @@ lr = LogisticRegression( X_train, X_test, y_train, y_test )
 step = 1./float(N_trunc)
 lr.truncate(N_trunc, X_test.shape[0])
 lr.beta_mode = beta_mode
-lr.fit_sgld(step,n_iters=n_iter,minibatch_size=50)
-var_grad = np.mean(np.var(lr.grad_sample,axis=0))
-var_traj = np.var(lr.sample, axis=0)    
-lr.fit_sgldfp(step,n_iters=n_iter,minibatch_size=50)
-var_grad_fp = np.mean(np.var(lr.grad_sample,axis=0))
-var_traj_fp = np.var(lr.sample, axis=0)
-np.savez(str_N, var_grad=var_grad, var_traj=var_traj, var_grad_fp=var_grad_fp, 
-         var_traj_fp=var_traj_fp)
+
+if str_algo=='sgld':
+    lr.fit_sgld(step,n_iters=n_iter,minibatch_size=50)   
+else:
+    lr.fit_sgldfp(step,n_iters=n_iter,minibatch_size=50)
+
+var_grad = lr.grad_sample[1,:] - np.power(lr.grad_sample[0,:],2)
+var_traj = lr.sample[1,:] - np.power(lr.sample[0,:],2)
+mean_traj = lr.sample[0,:]
+str_file = str_algo + '_' + str_N
+np.savez(str_file, var_grad=var_grad, var_traj=var_traj, mean_traj=mean_traj)
