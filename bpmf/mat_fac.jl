@@ -36,12 +36,13 @@ sgd_step_list = Dict(10^2 => 1e-2,
 # list_size = length( seed_list )
 # n_user_list = [10^2 5*10^2 NaN]
 
-# index = parse(Int64, ARGS[1])
-index = 1;
+index = parse(Int64, ARGS[1]) # 1, 2, 3
+# index = 1;
+algo = ARGS[2] # 'sgld' or 'sgldfp'
 
 # sgd_step = 3e-4
 # stepsize = 1e-5
-batchsize_sgd = 500; # 5000
+batchsize_sgd = 5000; # 5000
 batchsize = 500; # 5000
 # number_iter_sgd = 2 * 10^3;
 # number_iter = 2 * 10^3;
@@ -51,8 +52,8 @@ n_users = n_user_list[index];
 # stepsize = stepsize_list[n_users]
 
 
-seed_current = 1;
-srand(seed_current);
+# seed_current = 1;
+# srand(seed_current);
 train = readdlm("data/u1.base");
 test = readdlm("data/u1.test");
 train = round(Int64, train);
@@ -63,32 +64,37 @@ if !isnan(n_users)
 end
 model = matrix_factorisation(train, test);
 
-stepsize = sgd_step = 1 / model.N;
-number_iter_sgd = number_iter = round(Int64, 10^2 * model.N)
+sgd_step = 1e-2;
+stepsize =  1 / model.N;
+number_iter_sgd = 5*10^4;
+number_iter = round(Int64, 10^2 * model.N);
 
 
 sgd_init = run_sgd(model, sgd_step, batchsize_sgd, number_iter_sgd)
-store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLD")
-cv_fp, store_fp = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLDFP")
+if algo=="sgld"
+    store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLD")
+else
+    cv_fp, store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLDFP")
+end
 
-var_U = mean(var(store.U, [1]));
-var_V = mean(var(store.V, [1]));
-var_U_fp = mean(var(store_fp.U, [1]));
-var_V_fp = mean(var(store_fp.V, [1]));
-var_dlogU = mean(var(store.dlogU, [1]));
-var_dlogV = mean(var(store.dlogV, [1]));
-var_dlogU_fp = mean(var(store_fp.dlogU, [1]));
-var_dlogV_fp = mean(var(store_fp.dlogV, [1]));
+# var_U = mean(var(store.U, [1]));
+# var_V = mean(var(store.V, [1]));
+# var_U_fp = mean(var(store_fp.U, [1]));
+# var_V_fp = mean(var(store_fp.V, [1]));
+# var_dlogU = mean(var(store.dlogU, [1]));
+# var_dlogV = mean(var(store.dlogV, [1]));
+# var_dlogU_fp = mean(var(store_fp.dlogU, [1]));
+# var_dlogV_fp = mean(var(store_fp.dlogV, [1]));
 
-save_dict = Dict("var_U" => var_U,
-                 "var_V" => var_V,
-                 "var_U_fp" => var_U_fp,
-                 "var_V_fp" => var_V_fp,
-                 "var_dlogU" => var_dlogU,
-                 "var_dlogV" => var_dlogV,
-                 "var_dlogU_fp" => var_dlogU_fp,
-                 "var_dlogV_fp" => var_dlogV_fp);
+save_dict = Dict("U" => store.U,
+                 "V" => store.V,
+                 "dlogU" => store.dlogU,
+                 "dlogV" => store.dlogV,
+                 "a" => store.a,
+                 "dloga" => store.dloga,
+                 "b" => store.b,
+                 "dlogb" => store.dlogb);
 
-save(string(index, ".jld"), save_dict)
+save(string(algo, "_", index, ".jld"), save_dict)
 
 

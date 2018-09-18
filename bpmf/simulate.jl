@@ -30,20 +30,20 @@ type Storage
     dlogV::Array{Float64,3}
     dloga::Array{Float64,2}
     dlogb::Array{Float64,2}
-    rmse::Array{Float64,1}
+    # rmse::Array{Float64,1}
 end
 
-function Storage(model, n_iter)
-    U = zeros((n_iter, model.D, model.L))
-    dlogU = zeros((n_iter, model.D, model.L))
-    V = zeros((n_iter, model.D, model.M))
-    dlogV = zeros((n_iter, model.D, model.M))
-    a = zeros(n_iter, model.L)
-    dloga = zeros(n_iter, model.L)
-    b = zeros(n_iter, model.M)
-    dlogb = zeros(n_iter, model.M)
-    rmse = zeros(Int(n_iter / 10))
-    Storage(U, V, a, b, dlogU, dlogV, dloga, dlogb, rmse)
+function Storage(model)
+    U = zeros((2, model.D, model.L))
+    dlogU = zeros((2, model.D, model.L))
+    V = zeros((2, model.D, model.M))
+    dlogV = zeros((2, model.D, model.M))
+    a = zeros(2, model.L)
+    dloga = zeros(2, model.L)
+    b = zeros(2, model.M)
+    dlogb = zeros(2, model.M)
+    # rmse = zeros(Int(n_iter / 10))
+    Storage(U, V, a, b, dlogU, dlogV, dloga, dlogb)
 end
 
 function run_mcmc(model::matrix_factorisation, stepsize::Float64,
@@ -57,21 +57,31 @@ function run_mcmc(model::matrix_factorisation, stepsize::Float64,
     println("Run ", algo)
     println("Number of users: $(model.L)\tNumber of items: $(model.M)")
     tuning = sgld(model, subsize, stepsize)
-    stored = Storage(model, n_iter)
+    stored = Storage(model)
     if (algo=="SGLDFP")
         cv = control_variate(model, sgd_init)
     end
+    chunk = round(Int64, 0.01*n_iter)
+    ind = 1
     for tuning.iter in 1:n_iter
         # Print progress, check the chain hasn't diverged, store perplexity
-        if ( tuning.iter % 10 == 0 )
-            rmse_current = rmse(model)
-            println("$(tuning.iter)\t$rmse_current")
-            stored.rmse[Int(tuning.iter /10)] = rmse_current
-            if ( ( sum(isnan(model.U)) > 0 ) | ( sum(isnan(model.U)) > 0 ) )
-                print("\n")
-                error("The chain has diverged")
-            end
+        if ( tuning.iter % chunk == 0)
+            println(ind)
+            ind +=1
         end
+        if ( ( sum(isnan(model.U)) > 0 ) | ( sum(isnan(model.U)) > 0 ) )
+            print("\n")
+            error("The chain has diverged")
+        end
+        # if ( tuning.iter % 10 == 0 )
+        #     rmse_current = rmse(model)
+        #     println("$(tuning.iter)\t$rmse_current")
+        #     stored.rmse[Int(tuning.iter /10)] = rmse_current
+        #     if ( ( sum(isnan(model.U)) > 0 ) | ( sum(isnan(model.U)) > 0 ) )
+        #         print("\n")
+        #         error("The chain has diverged")
+        #     end
+        # end
         # Update 1 iteration
         if (algo=="SGLDFP")
             cv_full_update(model, tuning, cv)
@@ -79,14 +89,22 @@ function run_mcmc(model::matrix_factorisation, stepsize::Float64,
             sgld_full_update(model, tuning)
         end
         # Update storage
-        stored.U[tuning.iter,:,:] = model.U
-        stored.dlogU[tuning.iter,:,:] = model.dlogU
-        stored.V[tuning.iter,:,:] = model.V
-        stored.dlogV[tuning.iter,:,:] = model.dlogV
-        stored.a[tuning.iter,:] = model.a
-        stored.dloga[tuning.iter,:] = model.dloga
-        stored.b[tuning.iter,:] = model.b
-        stored.dlogb[tuning.iter,:] = model.dlogb
+        stored.U[1,:,:] += model.U / n_iter
+        stored.U[2,:,:] += model.U .^ 2 / n_iter
+        stored.dlogU[1,:,:] += model.dlogU / n_iter
+        stored.dlogU[2,:,:] += model.dlogU .^2 / n_iter
+        stored.V[1,:,:] += model.V / n_iter
+        stored.V[2,:,:] += model.V .^2 / n_iter
+        stored.dlogV[1,:,:] += model.dlogV / n_iter
+        stored.dlogV[2,:,:] += model.dlogV .^2 / n_iter
+        stored.a[1,:] += model.a / n_iter
+        stored.a[2,:] += model.a .^2 / n_iter
+        stored.dloga[1,:] += model.dloga / n_iter
+        stored.dloga[2,:] += model.dloga .^2 / n_iter
+        stored.b[1,:] += model.b / n_iter
+        stored.b[2,:] += model.b .^2 / n_iter
+        stored.dlogb[1,:] += model.dlogb / n_iter
+        stored.dlogb[2,:] += model.dlogb .^2 / n_iter
     end
     if (algo=="SGLDFP")
         return( cv, stored )

@@ -96,7 +96,12 @@ class LogisticRegression:
         # Calculate likelihood at beta mode
         self.full_post_computation()
         print ("Fitting chain...")
+        chunk = int(0.01*self.n_iters)
+        ind = 0        
         for i in np.arange(self.n_iters):
+            if (i % chunk == 0):
+                print(ind)
+                ind+=1            
             self.sample_minibatch(minibatch_size)
             self.sample += np.vstack((self.beta, np.power(self.beta,2))) / self.n_iters
             # Calculate gradients at current point
@@ -128,7 +133,12 @@ class LogisticRegression:
         # Initialize sample storage
         self.n_iters = n_iters
         print ("Fitting chain...")
+        chunk = int(0.01*self.n_iters)
+        ind = 0
         for i in np.arange(self.n_iters):
+            if (i % chunk == 0):
+                print(ind)
+                ind+=1
             self.sample_minibatch(minibatch_size)
             self.sample += np.vstack((self.beta, np.power(self.beta,2))) / self.n_iters
             # Calculate gradients at current point
