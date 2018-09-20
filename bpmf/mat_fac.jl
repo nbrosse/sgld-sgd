@@ -66,7 +66,7 @@ model = matrix_factorisation(train, test);
 
 sgd_step = 1e-2;
 stepsize =  1 / model.N;
-number_iter_sgd = 5*10^4;
+number_iter_sgd = 5*10^3;
 number_iter = round(Int64, 10^2 * model.N);
 
 
