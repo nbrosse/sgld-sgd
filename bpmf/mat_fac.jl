@@ -41,7 +41,7 @@ index = 1;
 
 # sgd_step = 3e-4
 # stepsize = 1e-5
-batchsize_sgd = 500; # 5000
+batchsize_sgd = 5000; # 5000
 batchsize = 500; # 5000
 # number_iter_sgd = 2 * 10^3;
 # number_iter = 2 * 10^3;
@@ -51,8 +51,8 @@ n_users = n_user_list[index];
 # stepsize = stepsize_list[n_users]
 
 
-seed_current = 1;
-srand(seed_current);
+# seed_current = 1;
+# srand(seed_current);
 train = readdlm("data/u1.base");
 test = readdlm("data/u1.test");
 train = round(Int64, train);
@@ -63,8 +63,10 @@ if !isnan(n_users)
 end
 model = matrix_factorisation(train, test);
 
-stepsize = sgd_step = 1 / model.N;
-number_iter_sgd = number_iter = round(Int64, 10^2 * model.N)
+sgd_step = 1e-2
+stepsize = 1 / model.N;
+number_iter_sgd = 2*10^3
+number_iter = 2*10^3 # round(Int64, 10^2 * model.N)
 
 
 sgd_init = run_sgd(model, sgd_step, batchsize_sgd, number_iter_sgd)

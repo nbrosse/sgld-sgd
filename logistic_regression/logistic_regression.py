@@ -369,10 +369,16 @@ step = 1./float(N_trunc)
 lr.truncate(N_trunc, X_test.shape[0])
 lr.beta_mode = beta_mode
 lr.fit_sgld(step,n_iters=n_iter,minibatch_size=50)
-var_grad = np.mean(np.var(lr.grad_sample,axis=0))
-var_traj = np.var(lr.sample, axis=0)    
+grad_sample_sgld = lr.grad_sample
+sample_sgld = lr.sample
+#var_grad = np.mean(np.var(lr.grad_sample,axis=0))
+#var_traj = np.var(lr.sample, axis=0)    
 lr.fit_sgldfp(step,n_iters=n_iter,minibatch_size=50)
-var_grad_fp = np.mean(np.var(lr.grad_sample,axis=0))
-var_traj_fp = np.var(lr.sample, axis=0)
-np.savez(str_N, var_grad=var_grad, var_traj=var_traj, var_grad_fp=var_grad_fp, 
-         var_traj_fp=var_traj_fp)
+grad_sample_fp = lr.grad_sample
+sample_fp = lr.sample
+#var_grad_fp = np.mean(np.var(lr.grad_sample,axis=0))
+#var_traj_fp = np.var(lr.sample, axis=0)
+#np.savez(str_N, var_grad=var_grad, var_traj=var_traj, var_grad_fp=var_grad_fp, 
+#         var_traj_fp=var_traj_fp)
+np.savez(str_N, grad_sample_sgld=grad_sample_sgld, sample_sgld=sample_sgld, 
+         sample_fp=sample_fp, grad_sample_fp=grad_sample_fp)

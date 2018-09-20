@@ -206,7 +206,7 @@ end
 
 function cv_full_update( model::matrix_factorisation, tuning::sgld, cv::control_variate )
     tuning.subsample = sample( 1:model.N, tuning.subsize )
-    cv_update_withoutnorm( model, cv, tuning )
+    cv_update( model, cv, tuning )
     # Update hyperparameters using Gibbs step every 10 iterations
     if tuning.iter % 10 == 0
         update_Λ( model )
@@ -216,7 +216,7 @@ end
 
 function sgld_full_update( model::matrix_factorisation, tuning::sgld)
     tuning.subsample = sample( 1:model.N, tuning.subsize )
-    sgld_update_withoutnorm( model, tuning )
+    sgld_update( model, tuning )
     # Update hyperparameters using Gibbs step every 10 iterations
     if tuning.iter % 10 == 0
         update_Λ( model )
