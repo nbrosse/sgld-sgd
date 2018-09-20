@@ -69,7 +69,7 @@ function run_mcmc(model::matrix_factorisation, stepsize::Float64,
             println(ind)
             ind +=1
         end
-        if ( ( sum(isnan(model.U)) > 0 ) | ( sum(isnan(model.U)) > 0 ) )
+        if ( ( sum(isnan(model.U)) > 0 ) | ( sum(isnan(model.V)) > 0 ) )
             print("\n")
             error("The chain has diverged")
         end
