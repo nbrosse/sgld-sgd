@@ -1,6 +1,6 @@
+using JLD
 using Iterators
 using StatsBase
-using JLD
 include("simulate.jl")
 
 function truncate_data(n_users::Int64, train::Array{Int64,2}, test::Array{Int64,2})
