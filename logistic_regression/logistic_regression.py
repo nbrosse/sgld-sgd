@@ -3,7 +3,7 @@ from sklearn.metrics import log_loss
 import time
 import scipy
 #import matplotlib.pyplot as plt
-from scipy.optimize import minimize
+#from scipy.optimize import minimize
 import sys
 
 class Stopwatch:
@@ -347,7 +347,7 @@ X_test = np.load( 'cover_type/X_test.dat' )
 y_train = np.load( 'cover_type/y_train.dat' )
 y_test = np.load( 'cover_type/y_test.dat' )
 
-beta_mode_tab = np.load('beta_mode_tab.npy')
+beta_mode_tab = np.load('beta_mode_tab_precond.npy')
 
 N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
 N_tab = N_tab[:-1]
