@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.metrics import log_loss
 import time
 #import matplotlib.pyplot as plt
-#from scipy.optimize import minimize
+from scipy.optimize import minimize
 import sys
 
 class Stopwatch:
@@ -249,7 +249,7 @@ class LogisticRegression:
         # Add gradient of log prior (assume Laplace prior with scale 1)
 #        dlogbeta -= np.sign(self.beta)
         # Add gradient of log prior (assume Gaussian prior with scale 1)
-        dlogbeta -= self.beta
+        dlogbeta -= self.N*self.beta
         return dlogbeta
 
 
@@ -278,9 +278,9 @@ class LogisticRegression:
         # Add gradient of log prior (assume Laplace prior with scale 1)
 #        dlogbeta -= np.sign(self.beta)
         # Add gradient of log prior (assume Gaussian prior with scale 1)
-        dlogbeta -= self.beta        
+        dlogbeta -= self.N*self.beta        
 #        dlogbetaopt -= np.sign(self.beta_mode)
-        dlogbetaopt -= self.beta_mode
+        dlogbetaopt -= self.N*self.beta_mode
         return dlogbeta, dlogbetaopt
 
     def sample_minibatch(self, minibatch_size):
@@ -293,7 +293,7 @@ class LogisticRegression:
         self.full_post = dlogbetaopt
 
 #%% Test - computation of the modes
-
+#
 #X_train = np.load( 'cover_type/X_train.dat' )
 #X_test = np.load( 'cover_type/X_test.dat' )
 #y_train = np.load( 'cover_type/y_train.dat' )
@@ -306,6 +306,7 @@ class LogisticRegression:
 #N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
 #
 #beta_mode_tab = np.zeros((len(N_tab), d))
+#full_post_tab = np.zeros((len(N_tab), d))
 #
 #for i in np.arange(len(N_tab)):
 #    N_trunc = N_tab[i]
@@ -314,29 +315,30 @@ class LogisticRegression:
 #    lr.truncate(N_trunc, X_test.shape[0])
 #    lr.fit_sgd(step,n_iters=n_iter,minibatch_size=500)
 #    
-#    X = np.array(lr.X)
-#    Y = lr.y
-#    
-#    def U(x):
-#       r = (1./2.)*np.linalg.norm(x)**2 - Y.T @ X @ x + np.sum(np.log(1.+np.exp(X @ x)))
-#       return r
-#    
-#    def gradU(x):
-#       grad = - X.T @ Y + X.T @ (1./(1+np.exp(-X @ x))) + x
-#       return grad
-#
-#    resultat = minimize(U, x0=lr.beta_mode, jac=gradU)
-#    beta_mode = resultat['x']
-#    beta_mode_tab[i,:] = beta_mode
+##    X = np.array(lr.X)
+##    Y = lr.y
+##    
+##    def U(x):
+##       r = (lr.N/2.)*np.linalg.norm(x)**2 - Y.T @ X @ x + np.sum(np.log(1.+np.exp(X @ x)))
+##       return r
+##    
+##    def gradU(x):
+##       grad = - X.T @ Y + X.T @ (1./(1+np.exp(-X @ x))) + lr.N*x
+##       return grad
+##
+##    resultat = minimize(U, x0=lr.beta_mode, jac=gradU)
+##    beta_mode = resultat['x']
+##    beta_mode_tab[i,:] = beta_mode
 #    
 #    # Sanity check
-#    lr.beta_mode = beta_mode
+##    lr.beta_mode = beta_mode
 #    lr.full_post_computation()
 #    print('iteration ', i)
 #    print('--------------------------------')
 #    print(lr.full_post)
+#    full_post_tab[i,:] = lr.full_post
 #
-#np.save('beta_mode_tab.npy', beta_mode_tab)
+#np.save('beta_mode_tab_mlarge.npy', beta_mode_tab)
 
 #%% Test running SGLD and SLDFP
 
@@ -345,7 +347,7 @@ X_test = np.load( 'cover_type/X_test.dat' )
 y_train = np.load( 'cover_type/y_train.dat' )
 y_test = np.load( 'cover_type/y_test.dat' )
 
-beta_mode_tab = np.load('beta_mode_tab.npy')
+beta_mode_tab = np.load('beta_mode_tab_mlarge.npy')
 
 N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
 n_iter_tab = 10**2 * N_tab
