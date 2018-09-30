@@ -322,90 +322,95 @@ for i, N in enumerate(N_tab):
 #y_train = np.load( 'cover_type/y_train.dat' )
 #y_test = np.load( 'cover_type/y_test.dat' )
 
-N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
-
-d = X_train.shape[1]
-n_iter = 10**3
-
-
-beta_mode_tab = np.zeros((len(N_tab), dd))
-full_post_tab = np.zeros((len(N_tab), dd))
-
-for i, N in enumerate(N_tab):
-    N_trunc = N_tab[i]
-    X_tr = X_train_dict[str(N)]
-    X_te = X_test_dict[str(N)]
-    lr = LogisticRegression( X_tr, X_te, y_train, y_test )
-    step = 1./float(N_trunc)
-    lr.truncate(N_trunc, X_test.shape[0])
-    lr.fit_sgd(step,n_iters=n_iter,minibatch_size=500)
-    
-    X = np.array(lr.X)
-    Y = lr.y
-    
-    def U(x):
-       r = (1./2.)*np.linalg.norm(x)**2 - Y.T @ X @ x + np.sum(np.log(1.+np.exp(X @ x)))
-       return r
-    
-    def gradU(x):
-       grad = - X.T @ Y + X.T @ (1./(1+np.exp(-X @ x))) + x
-       return grad
-
-    resultat = minimize(U, x0=lr.beta_mode, jac=gradU)
-    beta_mode = resultat['x']
-    beta_mode_tab[i,:] = beta_mode
-    
-    # Sanity check
-    lr.beta_mode = beta_mode
-    lr.full_post_computation()
-    print('iteration ', i)
-    print('--------------------------------')
-    print(lr.full_post)
-    full_post_tab[i,:] = lr.full_post
-
-np.save('beta_mode_tab_dd.npy', beta_mode_tab)
+#N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
+#
+#d = X_train.shape[1]
+#n_iter = 10**3
+#
+#
+#beta_mode_tab = np.zeros((len(N_tab), dd))
+#full_post_tab = np.zeros((len(N_tab), dd))
+#
+#for i, N in enumerate(N_tab):
+#    N_trunc = N_tab[i]
+#    X_tr = X_train_dict[str(N)]
+#    X_te = X_test_dict[str(N)]
+#    lr = LogisticRegression( X_tr, X_te, y_train, y_test )
+#    step = 1./float(N_trunc)
+#    lr.truncate(N_trunc, X_test.shape[0])
+#    lr.fit_sgd(step,n_iters=n_iter,minibatch_size=500)
+#    
+#    X = np.array(lr.X)
+#    Y = lr.y
+#    
+#    def U(x):
+#       r = (1./2.)*np.linalg.norm(x)**2 - Y.T @ X @ x + np.sum(np.log(1.+np.exp(X @ x)))
+#       return r
+#    
+#    def gradU(x):
+#       grad = - X.T @ Y + X.T @ (1./(1+np.exp(-X @ x))) + x
+#       return grad
+#
+#    resultat = minimize(U, x0=lr.beta_mode, jac=gradU)
+#    beta_mode = resultat['x']
+#    beta_mode_tab[i,:] = beta_mode
+#    
+#    # Sanity check
+#    lr.beta_mode = beta_mode
+#    lr.full_post_computation()
+#    print('iteration ', i)
+#    print('--------------------------------')
+#    print(lr.full_post)
+#    full_post_tab[i,:] = lr.full_post
+#
+#np.save('beta_mode_tab_dd.npy', beta_mode_tab)
 
 #%% Test running SGLD and SLDFP
 
-#X_train = np.load( 'cover_type/X_train.dat' )
-#X_test = np.load( 'cover_type/X_test.dat' )
-#y_train = np.load( 'cover_type/y_train.dat' )
-#y_test = np.load( 'cover_type/y_test.dat' )
-#
-#beta_mode_tab = np.load('beta_mode_tab_mlarge.npy')
-#
-#N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
-#n_iter_tab = 10**2 * N_tab
-#
+X_train = np.load( 'cover_type/X_train.dat' )
+X_test = np.load( 'cover_type/X_test.dat' )
+y_train = np.load( 'cover_type/y_train.dat' )
+y_test = np.load( 'cover_type/y_test.dat' )
+
+beta_mode_tab = np.load('beta_mode_tab_dd.npy')
+
+N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
+n_iter_tab = 10**2 * N_tab
+
 #str_N = sys.argv[1]
-#
-#if str_N=='N3':
-#    i = 0
-#elif str_N=='N4':
-#    i = 1
-#elif str_N=='N5':
-#    i = 2
-#else:
-#    i = 3
-#    
-#N_trunc = N_tab[i]
-#n_iter = n_iter_tab[i]
-#beta_mode= beta_mode_tab[i,:]
-#lr = LogisticRegression( X_train, X_test, y_train, y_test )
-#step = 1./float(N_trunc)
-#lr.truncate(N_trunc, X_test.shape[0])
-#lr.beta_mode = beta_mode
-#lr.fit_sgld(step,n_iters=n_iter,minibatch_size=50)
-#grad_sample_sgld = lr.grad_sample
-#sample_sgld = lr.sample
-##var_grad = np.mean(np.var(lr.grad_sample,axis=0))
-##var_traj = np.var(lr.sample, axis=0)    
-#lr.fit_sgldfp(step,n_iters=n_iter,minibatch_size=50)
-#grad_sample_fp = lr.grad_sample
-#sample_fp = lr.sample
-##var_grad_fp = np.mean(np.var(lr.grad_sample,axis=0))
-##var_traj_fp = np.var(lr.sample, axis=0)
-##np.savez(str_N, var_grad=var_grad, var_traj=var_traj, var_grad_fp=var_grad_fp, 
-##         var_traj_fp=var_traj_fp)
-#np.savez(str_N, grad_sample_sgld=grad_sample_sgld, sample_sgld=sample_sgld, 
-#         sample_fp=sample_fp, grad_sample_fp=grad_sample_fp)
+str_N = 'N3'
+
+if str_N=='N3':
+    i = 0
+elif str_N=='N4':
+    i = 1
+elif str_N=='N5':
+    i = 2
+else:
+    i = 3
+    
+N_trunc = N_tab[i]
+n_iter = n_iter_tab[i]
+beta_mode= beta_mode_tab[i,:]
+
+X_train = X_train_dict[str(N_trunc)]
+X_test = X_test_dict[str(N_trunc)]
+
+lr = LogisticRegression( X_train, X_test, y_train, y_test )
+step = 1./float(N_trunc)
+lr.truncate(N_trunc, X_test.shape[0])
+lr.beta_mode = beta_mode
+lr.fit_sgld(step,n_iters=n_iter,minibatch_size=50)
+grad_sample_sgld = lr.grad_sample
+sample_sgld = lr.sample
+#var_grad = np.mean(np.var(lr.grad_sample,axis=0))
+#var_traj = np.var(lr.sample, axis=0)    
+lr.fit_sgldfp(step,n_iters=n_iter,minibatch_size=50)
+grad_sample_fp = lr.grad_sample
+sample_fp = lr.sample
+#var_grad_fp = np.mean(np.var(lr.grad_sample,axis=0))
+#var_traj_fp = np.var(lr.sample, axis=0)
+#np.savez(str_N, var_grad=var_grad, var_traj=var_traj, var_grad_fp=var_grad_fp, 
+#         var_traj_fp=var_traj_fp)
+np.savez(str_N, grad_sample_sgld=grad_sample_sgld, sample_sgld=sample_sgld, 
+         sample_fp=sample_fp, grad_sample_fp=grad_sample_fp)
