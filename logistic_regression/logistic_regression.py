@@ -105,12 +105,12 @@ class LogisticRegression:
         timer = Stopwatch()
         for i in np.arange(self.n_iters):
             # Every so often output log loss on test set and store 
-            if i % self.loss_thinning == 0:
-                elapsed_time = timer.toc()
-                current_loss = self.logloss()
-                self.training_loss.append( [current_loss,elapsed_time] )
-                print ("{0}\t\t{1}\t\t{2}".format( i, current_loss, elapsed_time ))
-                timer.tic()
+#            if i % self.loss_thinning == 0:
+#                elapsed_time = timer.toc()
+#                current_loss = self.logloss()
+#                self.training_loss.append( [current_loss,elapsed_time] )
+#                print ("{0}\t\t{1}\t\t{2}".format( i, current_loss, elapsed_time ))
+#                timer.tic()
             self.sample_minibatch(minibatch_size)
             self.sample[i,:] = self.beta
             # Calculate gradients at current point
@@ -148,12 +148,12 @@ class LogisticRegression:
         timer = Stopwatch()
         for i in np.arange(self.n_iters):
             # Every so often output log loss on test set and store 
-            if i % self.loss_thinning == 0:
-                elapsed_time = timer.toc()
-                current_loss = self.logloss()
-                self.training_loss.append( [current_loss,elapsed_time] )
-                print ("{0}\t\t{1}\t\t{2}".format( i, current_loss, elapsed_time ))
-                timer.tic()
+#            if i % self.loss_thinning == 0:
+#                elapsed_time = timer.toc()
+#                current_loss = self.logloss()
+#                self.training_loss.append( [current_loss,elapsed_time] )
+#                print ("{0}\t\t{1}\t\t{2}".format( i, current_loss, elapsed_time ))
+#                timer.tic()
             self.sample_minibatch(minibatch_size)
             # Calculate gradients at current point
             dlogbeta = self.dlogpost()
@@ -302,7 +302,9 @@ y_test = np.load( 'cover_type/y_test.dat' )
 d = X_train.shape[1]
 N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
 
-dd = 27
+#dd = 27
+
+dd = 5
 
 X_train_dict = {}
 X_test_dict = {}
@@ -363,22 +365,21 @@ for i, N in enumerate(N_tab):
 #    print(lr.full_post)
 #    full_post_tab[i,:] = lr.full_post
 #
-#np.save('beta_mode_tab_dd.npy', beta_mode_tab)
+#np.save('beta_mode_tab_dd5.npy', beta_mode_tab)
 
 #%% Test running SGLD and SLDFP
 
-X_train = np.load( 'cover_type/X_train.dat' )
-X_test = np.load( 'cover_type/X_test.dat' )
-y_train = np.load( 'cover_type/y_train.dat' )
-y_test = np.load( 'cover_type/y_test.dat' )
-
-beta_mode_tab = np.load('beta_mode_tab_dd.npy')
+#X_train = np.load( 'cover_type/X_train.dat' )
+#X_test = np.load( 'cover_type/X_test.dat' )
+#y_train = np.load( 'cover_type/y_train.dat' )
+#y_test = np.load( 'cover_type/y_test.dat' )
+#
+beta_mode_tab = np.load('beta_mode_tab_dd5.npy')
 
 N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
 n_iter_tab = 10**2 * N_tab
 
-#str_N = sys.argv[1]
-str_N = 'N3'
+str_N = sys.argv[1]
 
 if str_N=='N3':
     i = 0
@@ -412,5 +413,6 @@ sample_fp = lr.sample
 #var_traj_fp = np.var(lr.sample, axis=0)
 #np.savez(str_N, var_grad=var_grad, var_traj=var_traj, var_grad_fp=var_grad_fp, 
 #         var_traj_fp=var_traj_fp)
-np.savez(str_N, grad_sample_sgld=grad_sample_sgld, sample_sgld=sample_sgld, 
+str_file = 'N3_dd5'
+np.savez(str_file, grad_sample_sgld=grad_sample_sgld, sample_sgld=sample_sgld, 
          sample_fp=sample_fp, grad_sample_fp=grad_sample_fp)
