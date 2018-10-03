@@ -36,7 +36,7 @@ sgd_step_list = Dict(10^2 => 1e-2,
 # list_size = length( seed_list )
 # n_user_list = [10^2 5*10^2 NaN]
 
-ARGS = ["1" "lmc"]
+# ARGS = ["1" "lmc"]
 
 index = parse(Int64, ARGS[1]) # 1, 2, 3
 # index = 1;
