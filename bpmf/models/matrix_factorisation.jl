@@ -59,6 +59,25 @@ function matrix_factorisation( train, test, D = 20 ) # D = 20
     matrix_factorisation( model_name, L, M, D, N, U, V, a, b, dlogU, dlogV, dloga, dlogb, train, test, α, β, Λ_U, Λ_V, λ_a, λ_b, τ, item_counts, user_counts )
 end
 
+function reinit( model::matrix_factorisation )
+    D = model.D
+    L = model.L
+    M = model.M
+    model.Λ_U = ones(D)
+    model.Λ_V = ones(D)
+    model.U = 0.35*ones( ( D, L ) )
+    model.V = 0.35*ones( ( D, M ) )
+    model.a = 0.05*ones( L )
+    model.b = 0.05*ones( M )
+    model.dlogU = zeros( ( D, L ) )
+    model.dlogV = zeros( ( D, M ) )
+    model.dloga = zeros( L )
+    model.dlogb = zeros( M )
+    model.λ_a = 1
+    model.λ_b = 1
+    model.τ = 1.0
+end
+
 """
 Update Λ using Gibbs
 """

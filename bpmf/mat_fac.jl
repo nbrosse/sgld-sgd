@@ -36,9 +36,11 @@ sgd_step_list = Dict(10^2 => 1e-2,
 # list_size = length( seed_list )
 # n_user_list = [10^2 5*10^2 NaN]
 
+ARGS = ["1" "lmc"]
+
 index = parse(Int64, ARGS[1]) # 1, 2, 3
 # index = 1;
-algo = ARGS[2] # 'sgld' or 'sgldfp'
+algo = ARGS[2] # 'sgd' or 'sgld' or 'sgldfp' or 'lmc'
 
 # sgd_step = 3e-4
 # stepsize = 1e-5
@@ -66,37 +68,22 @@ model = matrix_factorisation(train, test);
 
 sgd_step = 1e-2;
 stepsize =  1 / model.N;
-number_iter_sgd = 5*10^3;
-number_iter = round(Int64, 10^2 * model.N);
+number_iter_sgd = 5*10^3; # 5*10^3
+number_iter = round(Int64, 5*10^4); # 5*10^4
 
 
 sgd_init = run_sgd(model, sgd_step, batchsize_sgd, number_iter_sgd)
 if algo=="sgld"
-    store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLD")
+    store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLD", true)
 elseif algo=="sgldfp"
-    cv_fp, store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLDFP")
+    store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLDFP", true)
+elseif algo=="sgd"
+    store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGD", true)
 else
-    store = run_mcmc(model, stepsize, model.N, number_iter, sgd_init, "SGLD")
+    store = run_mcmc(model, stepsize, model.N, number_iter, sgd_init, "SGLD", true)
 end
 
-# var_U = mean(var(store.U, [1]));
-# var_V = mean(var(store.V, [1]));
-# var_U_fp = mean(var(store_fp.U, [1]));
-# var_V_fp = mean(var(store_fp.V, [1]));
-# var_dlogU = mean(var(store.dlogU, [1]));
-# var_dlogV = mean(var(store.dlogV, [1]));
-# var_dlogU_fp = mean(var(store_fp.dlogU, [1]));
-# var_dlogV_fp = mean(var(store_fp.dlogV, [1]));
 
-save_dict = Dict("U" => store.U,
-                 "V" => store.V,
-                 "dlogU" => store.dlogU,
-                 "dlogV" => store.dlogV,
-                 "a" => store.a,
-                 "dloga" => store.dloga,
-                 "b" => store.b,
-                 "dlogb" => store.dlogb);
-
-save(string(algo, "_", index, ".jld"), save_dict)
+save(string(algo, "_", index, ".jld"), "rmse", store.rmse)
 
 
