@@ -333,7 +333,7 @@ y_test = np.load( 'cover_type/y_test.dat' )
 d = X_train.shape[1]
 N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
 
-dd = 27
+dd = 5 # 27
 
 X_train_dict = {}
 X_test_dict = {}
@@ -353,7 +353,7 @@ for i, N in enumerate(N_tab):
 #y_train = np.load( 'cover_type/y_train.dat' )
 #y_test = np.load( 'cover_type/y_test.dat' )
 
-beta_mode_tab = np.load('beta_mode_tab_dd.npy')
+beta_mode_tab = np.load('beta_mode_tab_dd5.npy')
 
 n_iter_tab = 10**2 * N_tab
 
