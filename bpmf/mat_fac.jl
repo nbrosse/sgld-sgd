@@ -67,20 +67,21 @@ end
 model = matrix_factorisation(train, test);
 
 sgd_step = 1e-2;
-stepsize =  1 / model.N;
+# stepsize =  1 / model.N;
+stepsize = stepsize_list[n_users]
 number_iter_sgd = 5*10^3; # 5*10^3
 number_iter = round(Int64, 5*10^4); # 5*10^4
 
 
 sgd_init = run_sgd(model, sgd_step, batchsize_sgd, number_iter_sgd)
 if algo=="sgld"
-    store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLD", true)
+    store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLD", false)
 elseif algo=="sgldfp"
-    store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLDFP", true)
+    store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLDFP", false)
 elseif algo=="sgd"
-    store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGD", true)
+    store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGD", false)
 else
-    store = run_mcmc(model, stepsize, model.N, number_iter, sgd_init, "SGLD", true)
+    store = run_mcmc(model, stepsize, model.N, number_iter, sgd_init, "SGLD", false)
 end
 
 
