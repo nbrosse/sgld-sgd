@@ -4,6 +4,7 @@ import time
 #import matplotlib.pyplot as plt
 #from scipy.optimize import minimize
 import sys
+from sklearn import preprocessing
 
 class Stopwatch:
     """Define tic() and toc() for calculating time"""
@@ -315,10 +316,19 @@ X_test_dict = {}
 
 for i, N in enumerate(N_tab):
     X_tr = X_train[:N,:]
+    toto = preprocessing.scale(X_tr)
+    print(np.linalg.eig(X_tr.T @ X_tr)[0])
+    print(np.linalg.eig(toto.T @ toto)[0])
+    print('-------------------------')
     _, eig_vec = np.linalg.eig(X_tr.T @ X_tr)
 #    eig[str(N)] = eig_v[:dd]
     X_train_dict[str(N)] = X_tr @ eig_vec[:,:dd]
     X_test_dict[str(N)] = X_test @ eig_vec[:,:dd]
+#    toto = preprocessing.scale(X_train_dict[str(N)])
+#    print(np.linalg.eig(X_train_dict[str(N)].T @ X_train_dict[str(N)])[0])
+#    print(np.linalg.eig(toto.T @ toto)[0])
+#    print('-------------------------')
+    
     
 #%% Computation of the modes
 
