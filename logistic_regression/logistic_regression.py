@@ -394,7 +394,7 @@ else:
     i = 3
     
 N_trunc = N_tab[i]
-n_iter = n_iter_tab[i]
+n_iter = 10**5 # n_iter_tab[i]
 beta_mode= beta_mode_tab[i,:]
 
 X_train = X_train_dict[str(N_trunc)]
