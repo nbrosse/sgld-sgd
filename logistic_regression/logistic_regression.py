@@ -4,6 +4,7 @@ import time
 #import matplotlib.pyplot as plt
 #from scipy.optimize import minimize
 import sys
+from sklearn import preprocessing
 
 class Stopwatch:
     """Define tic() and toc() for calculating time"""
@@ -340,11 +341,19 @@ X_test_dict = {}
 
 #eig_val_tab = np.zeros((len(N_tab), d))
 
+#for i, N in enumerate(N_tab):
+#    X_tr = X_train[:N,:]
+#    _, eig_vec = np.linalg.eig(X_tr.T @ X_tr)
+#    X_train_dict[str(N)] = X_tr @ eig_vec[:,:dd]
+#    X_test_dict[str(N)] = X_test @ eig_vec[:,:dd]
+    
 for i, N in enumerate(N_tab):
     X_tr = X_train[:N,:]
     _, eig_vec = np.linalg.eig(X_tr.T @ X_tr)
     X_train_dict[str(N)] = X_tr @ eig_vec[:,:dd]
     X_test_dict[str(N)] = X_test @ eig_vec[:,:dd]
+    X_train_dict[str(N)] = preprocessing.scale(X_train_dict[str(N)])
+    X_test_dict[str(N)] = preprocessing.scale(X_test_dict[str(N)])
 
 #%% Test running SGLD and SLDFP
 
@@ -353,7 +362,7 @@ for i, N in enumerate(N_tab):
 #y_train = np.load( 'cover_type/y_train.dat' )
 #y_test = np.load( 'cover_type/y_test.dat' )
 
-beta_mode_tab = np.load('beta_mode_tab_dd5.npy')
+beta_mode_tab = np.load('beta_mode_tab_stand_dd5.npy')
 
 n_iter_tab = 10**2 * N_tab
 
