@@ -391,7 +391,9 @@ lr.truncate(N_trunc, X_test.shape[0])
 lr.beta_mode = beta_mode
 
 if str_algo=='sgld':
-    lr.fit_sgld(step,n_iters=n_iter,minibatch_size=50)   
+    lr.fit_sgld(step,n_iters=n_iter,minibatch_size=50)
+elif str_algo=='lmc':
+    lr.fit_sgld(step,n_iters=n_iter,minibatch_size=N_trunc)        
 else:
     lr.fit_sgldfp(step,n_iters=n_iter,minibatch_size=50)
 
