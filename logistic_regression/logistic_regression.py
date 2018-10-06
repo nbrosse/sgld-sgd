@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.metrics import log_loss
 import time
 #import matplotlib.pyplot as plt
-from scipy.optimize import minimize
+#from scipy.optimize import minimize
 import sys
 
 class Stopwatch:
@@ -309,11 +309,14 @@ dd = 5
 X_train_dict = {}
 X_test_dict = {}
 
+#eig = {}
+
 #eig_val_tab = np.zeros((len(N_tab), d))
 
 for i, N in enumerate(N_tab):
     X_tr = X_train[:N,:]
     _, eig_vec = np.linalg.eig(X_tr.T @ X_tr)
+#    eig[str(N)] = eig_v[:dd]
     X_train_dict[str(N)] = X_tr @ eig_vec[:,:dd]
     X_test_dict[str(N)] = X_test @ eig_vec[:,:dd]
     
@@ -413,6 +416,6 @@ sample_fp = lr.sample
 #var_traj_fp = np.var(lr.sample, axis=0)
 #np.savez(str_N, var_grad=var_grad, var_traj=var_traj, var_grad_fp=var_grad_fp, 
 #         var_traj_fp=var_traj_fp)
-str_file = 'N3_dd5'
+str_file = str_N + '_dd5'
 np.savez(str_file, grad_sample_sgld=grad_sample_sgld, sample_sgld=sample_sgld, 
          sample_fp=sample_fp, grad_sample_fp=grad_sample_fp)
