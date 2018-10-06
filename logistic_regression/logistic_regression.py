@@ -316,10 +316,10 @@ X_test_dict = {}
 
 for i, N in enumerate(N_tab):
     X_tr = X_train[:N,:]
-    toto = preprocessing.scale(X_tr)
-    print(np.linalg.eig(X_tr.T @ X_tr)[0])
-    print(np.linalg.eig(toto.T @ toto)[0])
-    print('-------------------------')
+#    toto = preprocessing.scale(X_tr)
+#    print(np.linalg.eig(X_tr.T @ X_tr)[0])
+#    print(np.linalg.eig(toto.T @ toto)[0])
+#    print('-------------------------')
     _, eig_vec = np.linalg.eig(X_tr.T @ X_tr)
 #    eig[str(N)] = eig_v[:dd]
     X_train_dict[str(N)] = X_tr @ eig_vec[:,:dd]
@@ -328,7 +328,24 @@ for i, N in enumerate(N_tab):
 #    print(np.linalg.eig(X_train_dict[str(N)].T @ X_train_dict[str(N)])[0])
 #    print(np.linalg.eig(toto.T @ toto)[0])
 #    print('-------------------------')
-    
+
+beta_mode_tab = np.load('beta_mode_tab_dd5.npy')
+N_length = len(N_tab)
+n_simu = 100
+
+stock_grad= np.zeros((N_length, n_simu, dd))
+
+for i, N in enumerate(N_tab):    
+    lr = LogisticRegression( X_train_dict[str(N)], X_test_dict[str(N)], y_train, y_test )
+    lr.truncate(N, X_test.shape[0])
+    beta_mode = beta_mode_tab[i,:]
+    for j in np.arange(n_simu):
+        lr.beta_mode = np.random.normal(loc=beta_mode, scale=1.0, size=dd)
+        lr.full_post_computation()
+        stock_grad[i,j,:] = lr.full_post
+        print("i ", i, " j ", j)
+        
+np.save("stock_grad.npy", stock_grad)
     
 #%% Computation of the modes
 
