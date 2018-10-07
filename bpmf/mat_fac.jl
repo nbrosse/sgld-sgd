@@ -73,6 +73,8 @@ number_iter = round(Int64, 10^2 * model.N);
 sgd_init = run_sgd(model, sgd_step, batchsize_sgd, number_iter_sgd)
 if algo=="sgld"
     store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLD")
+elseif algo=='sgd'
+    store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGD")
 elseif algo=="sgldfp"
     cv_fp, store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLDFP")
 else

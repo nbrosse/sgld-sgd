@@ -85,6 +85,8 @@ function run_mcmc(model::matrix_factorisation, stepsize::Float64,
         # Update 1 iteration
         if (algo=="SGLDFP")
             cv_full_update(model, tuning, cv)
+        elseif (algo=="SGD")
+            sgd_full_update_mcmc(model, tuning)
         else
             sgld_full_update(model, tuning)
         end

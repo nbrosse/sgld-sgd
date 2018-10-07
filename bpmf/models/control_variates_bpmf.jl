@@ -180,6 +180,34 @@ function sgld_update( model::matrix_factorisation, tuning::sgld )
     model.dlogb =  dlogb 
 end
 
+function sgd_update_mcmc( model::matrix_factorisation, tuning::sgld )
+    ζ = 1 / tuning.iter
+    # Calculate required gradient estimates
+    ( dlogU, dlogV, dloga, dlogb ) = dlogpost( model, tuning.subsample, model.U, model.V,
+                                               model.a, model.b )
+    # Update U
+    tuning.G_U += ζ*( mean( dlogU.^ 2 ) - tuning.G_U )
+    # η = sqrt( tuning.ϵ_U / sqrt( tuning.G_U ) ) * reshape(rand( Normal( 0, 1 ),  model.D * model.L ), ( model.D, model.L ))
+    model.U += tuning.ϵ_U / ( sqrt( tuning.G_U ) * 2 ) * dlogU # + η
+    # Update V
+    tuning.G_V += ζ*( mean(  dlogV .^ 2 ) - tuning.G_V )
+    # η = sqrt( tuning.ϵ_V / sqrt( tuning.G_V ) ) * reshape(rand( Normal( 0, 1 ), model.D * model.M), model.D, model.M )
+    model.V += tuning.ϵ_V / ( sqrt( tuning.G_V ) * 2 ) * dlogV # + η
+    # Update a
+    tuning.G_a += ζ*( mean(  dloga .^ 2 ) - tuning.G_a )
+    # η = sqrt( tuning.ϵ_a / sqrt( tuning.G_a ) ) * rand( Normal( 0, 1 ), model.L )
+    model.a += tuning.ϵ_a / ( sqrt( tuning.G_a ) * 2 ) *  dloga  #+ η
+    # Update b
+    tuning.G_b += ζ*( mean( dlogb .^ 2 ) - tuning.G_b )
+    # η = sqrt( tuning.ϵ_b / sqrt( tuning.G_b ) ) * rand( Normal( 0, 1 ), model.M )
+    model.b += tuning.ϵ_b / ( sqrt( tuning.G_b ) * 2 ) *  dlogb #+ η
+
+    model.dlogU =  dlogU 
+    model.dlogV =  dlogV 
+    model.dloga =  dloga 
+    model.dlogb =  dlogb 
+end
+
 function sgld_update_withoutnorm( model::matrix_factorisation, tuning::sgld )
     ζ = 1 / tuning.iter
     # Calculate required gradient estimates
@@ -217,6 +245,16 @@ end
 function sgld_full_update( model::matrix_factorisation, tuning::sgld)
     tuning.subsample = sample( 1:model.N, tuning.subsize )
     sgld_update( model, tuning )
+    # Update hyperparameters using Gibbs step every 10 iterations
+    if tuning.iter % 10 == 0
+        update_Λ( model )
+    end
+    return( model )
+end
+
+function sgd_full_update_mcmc( model::matrix_factorisation, tuning::sgld)
+    tuning.subsample = sample( 1:model.N, tuning.subsize )
+    sgd_update_mcmc( model, tuning )
     # Update hyperparameters using Gibbs step every 10 iterations
     if tuning.iter % 10 == 0
         update_Λ( model )
