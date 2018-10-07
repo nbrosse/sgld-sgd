@@ -166,28 +166,32 @@ class LogisticRegression:
         self.loss_thinning = 10
         # Initialize sample storage
         self.n_iters = n_iters
-        self.sample = np.zeros( ( self.n_iters, self.d ) )
-        self.grad_sample = np.zeros( ( self.n_iters, self.d ) )
+#        self.sample = np.zeros( ( self.n_iters, self.d ) )
+#        self.grad_sample = np.zeros( ( self.n_iters, self.d ) )
+        self.sample = np.zeros((2, self.d))
+        self.grad_sample = np.zeros((2, self.d))
         print ("Fitting using optimization procedure")
         print ("{0}\t{1}".format( "iteration", "Test log loss" ))
-        timer = Stopwatch()
+#        timer = Stopwatch()
         self.beta = np.random.rand(self.d)
         for i in np.arange(self.n_iters):
             # Every so often output log loss and elapsed time on test set and store 
-            if i % self.loss_thinning == 0:
-                elapsed_time = timer.toc()
-                current_loss = self.logloss()
-                self.training_loss.append( [current_loss,elapsed_time] )
-                print ("{0}\t\t{1}\t\t{2}".format( i, current_loss, elapsed_time ))
-                timer.tic()
+#            if i % self.loss_thinning == 0:
+#                elapsed_time = timer.toc()
+#                current_loss = self.logloss()
+#                self.training_loss.append( [current_loss,elapsed_time] )
+#                print ("{0}\t\t{1}\t\t{2}".format( i, current_loss, elapsed_time ))
+#                timer.tic()
             self.sample_minibatch(minibatch_size)
             # Calculate gradients at current point
             dlogbeta = self.dlogpost()
-            self.grad_sample[i,:] = dlogbeta
-            self.sample[i,:] = self.beta
+            self.grad_sample += np.vstack((dlogbeta, np.power(dlogbeta, 2))) / self.n_iters
+#            self.grad_sample[i,:] = dlogbeta
+#            self.sample[i,:] = self.beta
+            self.sample += np.vstack((self.beta, np.power(self.beta,2))) / self.n_iters
             # Update parameters using SGD
             self.beta += stepsize / 2 * dlogbeta
-        self.beta_mode = self.beta
+#        self.beta_mode = self.beta
 
 
     def logloss(self):
@@ -367,7 +371,7 @@ beta_mode_tab = np.load('beta_mode_tab_stand_dd5.npy')
 n_iter_tab = 10**2 * N_tab
 
 str_N = sys.argv[1]
-str_algo = sys.argv[2] # 'sgld' or 'sgldfp'
+str_algo = sys.argv[2] # 'sgld' or 'sgldfp', 'lmc' or 'sgd'
 
 if str_N=='N3':
     i = 0
@@ -393,7 +397,9 @@ lr.beta_mode = beta_mode
 if str_algo=='sgld':
     lr.fit_sgld(step,n_iters=n_iter,minibatch_size=50)
 elif str_algo=='lmc':
-    lr.fit_sgld(step,n_iters=n_iter,minibatch_size=N_trunc)        
+    lr.fit_sgld(step,n_iters=n_iter,minibatch_size=N_trunc)   
+elif str_algo=='sgd':
+    lr.fit_sgd(step,n_iters=n_iter,minibatch_size=50)     
 else:
     lr.fit_sgldfp(step,n_iters=n_iter,minibatch_size=50)
 
