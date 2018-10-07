@@ -185,16 +185,17 @@ class LogisticRegression:
         self.grad_sample = np.zeros( ( self.n_iters, self.d ) )
         print ("Fitting using optimization procedure")
         print ("{0}\t{1}".format( "iteration", "Test log loss" ))
-        timer = Stopwatch()
-        self.beta = np.random.rand(self.d)
+#        timer = Stopwatch()
+#        self.beta = np.random.rand(self.d)
+        self.beta = self.beta_mode.copy()
         for i in np.arange(self.n_iters):
             # Every so often output log loss and elapsed time on test set and store 
-            if i % self.loss_thinning == 0:
-                elapsed_time = timer.toc()
-                current_loss = self.logloss()
-                self.training_loss.append( [current_loss,elapsed_time] )
-                print ("{0}\t\t{1}\t\t{2}".format( i, current_loss, elapsed_time ))
-                timer.tic()
+#            if i % self.loss_thinning == 0:
+#                elapsed_time = timer.toc()
+#                current_loss = self.logloss()
+#                self.training_loss.append( [current_loss,elapsed_time] )
+#                print ("{0}\t\t{1}\t\t{2}".format( i, current_loss, elapsed_time ))
+#                timer.tic()
             self.sample_minibatch(minibatch_size)
             # Calculate gradients at current point
             dlogbeta = self.dlogpost()
@@ -202,7 +203,7 @@ class LogisticRegression:
             self.sample[i,:] = self.beta
             # Update parameters using SGD
             self.beta += stepsize / 2 * dlogbeta
-        self.beta_mode = self.beta
+#        self.beta_mode = self.beta
 
 
     def logloss(self):
@@ -295,57 +296,59 @@ class LogisticRegression:
 
 #%% Restriction of the state space
 
-X_train = np.load( 'cover_type/X_train.dat' )
-X_test = np.load( 'cover_type/X_test.dat' )
-y_train = np.load( 'cover_type/y_train.dat' )
-y_test = np.load( 'cover_type/y_test.dat' )
+#X_train = np.load( 'cover_type/X_train.dat' )
+#X_test = np.load( 'cover_type/X_test.dat' )
+#y_train = np.load( 'cover_type/y_train.dat' )
+#y_test = np.load( 'cover_type/y_test.dat' )
+#
+#d = X_train.shape[1]
+#N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
+#
+##dd = 27
+#
+#dd = 5
+#
+#X_train_dict = {}
+#X_test_dict = {}
+#
+##eig = {}
+#
+##eig_val_tab = np.zeros((len(N_tab), d))
+#
+#for i, N in enumerate(N_tab):
+#    X_tr = X_train[:N,:]
+##    toto = preprocessing.scale(X_tr)
+##    print(np.linalg.eig(X_tr.T @ X_tr)[0])
+##    print(np.linalg.eig(toto.T @ toto)[0])
+##    print('-------------------------')
+#    _, eig_vec = np.linalg.eig(X_tr.T @ X_tr)
+##    eig[str(N)] = eig_v[:dd]
+#    X_train_dict[str(N)] = X_tr @ eig_vec[:,:dd]
+#    X_test_dict[str(N)] = X_test @ eig_vec[:,:dd]
+#    X_train_dict[str(N)] = preprocessing.scale(X_train_dict[str(N)])
+#    X_test_dict[str(N)] = preprocessing.scale(X_test_dict[str(N)])
+##    toto = preprocessing.scale(X_train_dict[str(N)])
+##    print(np.linalg.eig(X_train_dict[str(N)].T @ X_train_dict[str(N)])[0])
+##    print(np.linalg.eig(toto.T @ toto)[0])
+##    print('-------------------------')
 
-d = X_train.shape[1]
-N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
-
-#dd = 27
-
-dd = 5
-
-X_train_dict = {}
-X_test_dict = {}
-
-#eig = {}
-
-#eig_val_tab = np.zeros((len(N_tab), d))
-
-for i, N in enumerate(N_tab):
-    X_tr = X_train[:N,:]
-#    toto = preprocessing.scale(X_tr)
-#    print(np.linalg.eig(X_tr.T @ X_tr)[0])
-#    print(np.linalg.eig(toto.T @ toto)[0])
-#    print('-------------------------')
-    _, eig_vec = np.linalg.eig(X_tr.T @ X_tr)
-#    eig[str(N)] = eig_v[:dd]
-    X_train_dict[str(N)] = X_tr @ eig_vec[:,:dd]
-    X_test_dict[str(N)] = X_test @ eig_vec[:,:dd]
-#    toto = preprocessing.scale(X_train_dict[str(N)])
-#    print(np.linalg.eig(X_train_dict[str(N)].T @ X_train_dict[str(N)])[0])
-#    print(np.linalg.eig(toto.T @ toto)[0])
-#    print('-------------------------')
-
-beta_mode_tab = np.load('beta_mode_tab_dd5.npy')
-N_length = len(N_tab)
-n_simu = 100
-
-stock_grad= np.zeros((N_length, n_simu, dd))
-
-for i, N in enumerate(N_tab):    
-    lr = LogisticRegression( X_train_dict[str(N)], X_test_dict[str(N)], y_train, y_test )
-    lr.truncate(N, X_test.shape[0])
-    beta_mode = beta_mode_tab[i,:]
-    for j in np.arange(n_simu):
-        lr.beta_mode = np.random.normal(loc=beta_mode, scale=1.0, size=dd)
-        lr.full_post_computation()
-        stock_grad[i,j,:] = lr.full_post
-        print("i ", i, " j ", j)
-        
-np.save("stock_grad.npy", stock_grad)
+#beta_mode_tab = np.load('beta_mode_tab_stand_dd5.npy')
+#N_length = len(N_tab)
+#n_simu = 100
+#
+#stock_grad= np.zeros((N_length, n_simu, dd))
+#
+#for i, N in enumerate(N_tab):    
+#    lr = LogisticRegression( X_train_dict[str(N)], X_test_dict[str(N)], y_train, y_test )
+#    lr.truncate(N, X_test.shape[0])
+#    beta_mode = beta_mode_tab[i,:]
+#    for j in np.arange(n_simu):
+#        lr.beta_mode = np.random.normal(loc=beta_mode, scale=1.0, size=dd)
+#        lr.full_post_computation()
+#        stock_grad[i,j,:] = lr.full_post
+#        print("i ", i, " j ", j)
+#        
+#np.save("stock_grad.npy", stock_grad)
     
 #%% Computation of the modes
 
@@ -399,12 +402,43 @@ np.save("stock_grad.npy", stock_grad)
 
 #%% Test running SGLD and SLDFP
 
-#X_train = np.load( 'cover_type/X_train.dat' )
-#X_test = np.load( 'cover_type/X_test.dat' )
-#y_train = np.load( 'cover_type/y_train.dat' )
-#y_test = np.load( 'cover_type/y_test.dat' )
-#
-beta_mode_tab = np.load('beta_mode_tab_dd5.npy')
+X_train = np.load( 'cover_type/X_train.dat' )
+X_test = np.load( 'cover_type/X_test.dat' )
+y_train = np.load( 'cover_type/y_train.dat' )
+y_test = np.load( 'cover_type/y_test.dat' )
+
+beta_mode_tab = np.load('beta_mode_tab_stand_dd5.npy')
+
+d = X_train.shape[1]
+N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
+
+#dd = 27
+
+dd = 5
+
+X_train_dict = {}
+X_test_dict = {}
+
+#eig = {}
+
+#eig_val_tab = np.zeros((len(N_tab), d))
+
+for i, N in enumerate(N_tab):
+    X_tr = X_train[:N,:]
+#    toto = preprocessing.scale(X_tr)
+#    print(np.linalg.eig(X_tr.T @ X_tr)[0])
+#    print(np.linalg.eig(toto.T @ toto)[0])
+#    print('-------------------------')
+    _, eig_vec = np.linalg.eig(X_tr.T @ X_tr)
+#    eig[str(N)] = eig_v[:dd]
+    X_train_dict[str(N)] = X_tr @ eig_vec[:,:dd]
+    X_test_dict[str(N)] = X_test @ eig_vec[:,:dd]
+    X_train_dict[str(N)] = preprocessing.scale(X_train_dict[str(N)])
+    X_test_dict[str(N)] = preprocessing.scale(X_test_dict[str(N)])
+#    toto = preprocessing.scale(X_train_dict[str(N)])
+#    print(np.linalg.eig(X_train_dict[str(N)].T @ X_train_dict[str(N)])[0])
+#    print(np.linalg.eig(toto.T @ toto)[0])
+#    print('-------------------------')
 
 N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
 n_iter_tab = 10**2 * N_tab
@@ -430,7 +464,7 @@ X_test = X_test_dict[str(N_trunc)]
 lr = LogisticRegression( X_train, X_test, y_train, y_test )
 step = 1./float(N_trunc)
 lr.truncate(N_trunc, X_test.shape[0])
-lr.beta_mode = beta_mode
+lr.beta_mode = beta_mode.copy()
 lr.fit_sgld(step,n_iters=n_iter,minibatch_size=50)
 grad_sample_sgld = lr.grad_sample
 sample_sgld = lr.sample
@@ -439,10 +473,14 @@ sample_sgld = lr.sample
 lr.fit_sgldfp(step,n_iters=n_iter,minibatch_size=50)
 grad_sample_fp = lr.grad_sample
 sample_fp = lr.sample
+lr.fit_sgd(step,n_iters=n_iter,minibatch_size=50)
+grad_sample_sgd = lr.grad_sample
+sample_sgd = lr.sample
 #var_grad_fp = np.mean(np.var(lr.grad_sample,axis=0))
 #var_traj_fp = np.var(lr.sample, axis=0)
 #np.savez(str_N, var_grad=var_grad, var_traj=var_traj, var_grad_fp=var_grad_fp, 
 #         var_traj_fp=var_traj_fp)
-str_file = str_N + '_dd5'
+str_file = str_N + '_stand_dd5'
 np.savez(str_file, grad_sample_sgld=grad_sample_sgld, sample_sgld=sample_sgld, 
-         sample_fp=sample_fp, grad_sample_fp=grad_sample_fp)
+         sample_fp=sample_fp, grad_sample_fp=grad_sample_fp,
+         sample_sgd=sample_sgd, grad_sample_sgd=grad_sample_sgd)
