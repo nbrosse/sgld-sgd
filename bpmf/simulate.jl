@@ -61,6 +61,9 @@ function run_mcmc(model::matrix_factorisation, stepsize::Float64,
     if (algo=="SGLDFP")
         cv = control_variate(model, sgd_init)
     end
+    if (algo=="SGD")
+        reinit(model)
+    end
     chunk = round(Int64, 0.01*n_iter)
     ind = 1
     for tuning.iter in 1:n_iter
