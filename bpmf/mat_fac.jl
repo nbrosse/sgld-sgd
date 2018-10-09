@@ -70,7 +70,8 @@ number_iter = 2*10^3 # round(Int64, 10^2 * model.N)
 
 
 sgd_init = run_sgd(model, sgd_step, batchsize_sgd, number_iter_sgd)
-store = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLD")
+store_sgld = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLD")
+store_sgd = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGD")
 cv_fp, store_fp = run_mcmc(model, stepsize, batchsize, number_iter, sgd_init, "SGLDFP")
 
 var_U = mean(var(store.U, [1]));
