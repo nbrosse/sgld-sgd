@@ -4,7 +4,7 @@ import time
 #import matplotlib.pyplot as plt
 #from scipy.optimize import minimize
 import sys
-from sklearn import preprocessing
+#from sklearn import preprocessing
 
 class Stopwatch:
     """Define tic() and toc() for calculating time"""
@@ -338,26 +338,26 @@ y_test = np.load( 'cover_type/y_test.dat' )
 d = X_train.shape[1]
 N_tab = np.array([10**3, 10**4, 10**5, X_train.shape[0]], dtype=np.int32)
 
-dd = 5 # 27
-
-X_train_dict = {}
-X_test_dict = {}
-
-#eig_val_tab = np.zeros((len(N_tab), d))
-
+#dd = 5 # 27
+#
+#X_train_dict = {}
+#X_test_dict = {}
+#
+##eig_val_tab = np.zeros((len(N_tab), d))
+#
+##for i, N in enumerate(N_tab):
+##    X_tr = X_train[:N,:]
+##    _, eig_vec = np.linalg.eig(X_tr.T @ X_tr)
+##    X_train_dict[str(N)] = X_tr @ eig_vec[:,:dd]
+##    X_test_dict[str(N)] = X_test @ eig_vec[:,:dd]
+#    
 #for i, N in enumerate(N_tab):
 #    X_tr = X_train[:N,:]
 #    _, eig_vec = np.linalg.eig(X_tr.T @ X_tr)
 #    X_train_dict[str(N)] = X_tr @ eig_vec[:,:dd]
 #    X_test_dict[str(N)] = X_test @ eig_vec[:,:dd]
-    
-for i, N in enumerate(N_tab):
-    X_tr = X_train[:N,:]
-    _, eig_vec = np.linalg.eig(X_tr.T @ X_tr)
-    X_train_dict[str(N)] = X_tr @ eig_vec[:,:dd]
-    X_test_dict[str(N)] = X_test @ eig_vec[:,:dd]
-    X_train_dict[str(N)] = preprocessing.scale(X_train_dict[str(N)])
-    X_test_dict[str(N)] = preprocessing.scale(X_test_dict[str(N)])
+#    X_train_dict[str(N)] = preprocessing.scale(X_train_dict[str(N)])
+#    X_test_dict[str(N)] = preprocessing.scale(X_test_dict[str(N)])
 
 #%% Test running SGLD and SLDFP
 
@@ -366,7 +366,7 @@ for i, N in enumerate(N_tab):
 #y_train = np.load( 'cover_type/y_train.dat' )
 #y_test = np.load( 'cover_type/y_test.dat' )
 
-beta_mode_tab = np.load('beta_mode_tab_stand_dd5.npy')
+beta_mode_tab = np.load('beta_mode_tab.npy')
 
 n_iter_tab = 10**2 * N_tab
 
@@ -386,13 +386,13 @@ N_trunc = N_tab[i]
 n_iter = n_iter_tab[i]
 beta_mode= beta_mode_tab[i,:]
 
-X_train = X_train_dict[str(N_trunc)]
-X_test = X_test_dict[str(N_trunc)]
+#X_train = X_train_dict[str(N_trunc)]
+#X_test = X_test_dict[str(N_trunc)]
 
 lr = LogisticRegression( X_train, X_test, y_train, y_test )
 step = 1./float(N_trunc)
 lr.truncate(N_trunc, X_test.shape[0])
-lr.beta_mode = beta_mode
+lr.beta_mode = beta_mode.copy()
 
 if str_algo=='sgld':
     lr.fit_sgld(step,n_iters=n_iter,minibatch_size=50)
